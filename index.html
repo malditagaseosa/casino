@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+	<!-- Icons -->
+	<link rel="stylesheet" href="css/open-iconic-bootstrap.min.css">
+    <title>Casino</title>
+</head>
+<style>
+	[v-cloak] {
+		display: none;
+	}
+
+	.btn {
+		width: fit-content;
+	}
+</style>
+<body class="mt-5">
+    <div class="container-fluid" id="app-casino">
+        <div class="row pl-3 pr-3 mt-3">
+            <div class="col-md-12">
+                <h1>Casino</h1>
+                <hr>
+            </div>            
+        </div>
+        <div class="row pl-3 pr-3 mt-3">
+            <div class="col-md-6 col-sm-12 mb-4">
+				<div class="card px-4 pb-4">
+					<h3 class="mt-3">Lista de jugadores</h3>
+					<button data-toggle="modal" data-target="#modal-player" type="button" class="btn btn-success mt-2">Nuevo jugador</button>
+					<ul class="list-group mt-3" v-cloak>
+						<li v-for="player in players" class="list-group-item">						
+							{{player.name}} 
+							<span class="mr-2 ml-2 badge badge-secondary">${{player.cash}}</span>
+							<div class="btn-group float-right" role="group">
+								<button title="Eliminar" type="button" v-on:click="removePlayer(player.key)" class="d-inline-block btn btn-danger btn-small">
+									<span class="oi oi-trash"></span>
+								</button>
+								<button title="Editar" type="button" v-on:click="handleEdit(player)" class="d-inline-block btn btn-info btn-small">
+									<span class="oi oi-brush"></span>
+								</button>
+							</div>						
+						</li>
+					</ul>
+				</div>
+            </div>
+            <div class="col-md-6 col-sm-12 mb-4">
+				<div class="card px-4 pb-4">
+					<h3 class="mt-3">Resultados de la ruleta</h3>
+					<span class="small mb-2" v-cloak>Cada {{minutesToNextRound}} minutos se juega una ronda automaticamente</span>			
+					<button v-on:click="playRound" type="button" class="btn btn-success mt-2">Jugar Ronda</button>              
+					<h5 v-if="lastTotalBet" v-cloak class="mt-4">Total apostado: ${{lastTotalBet}}</h5>
+					<h5 v-if="lastRound.result" v-cloak class="mt-4">Resultado: {{lastRound.result}}</h5>
+					<h5 v-if="lastRound.bets.length > 0" v-cloak class="mt-4">Apuestas:</h5>
+					<ul v-if="lastRound.bets.length > 0" class="mt-2" v-cloak>
+						<li v-for="player in lastRound.bets">
+							{{player.name}} - ${{player.bet}}&nbsp;({{player.percentFactor * 100}}%) - {{player.result}}
+							<span v-cloak v-if="player.isWinner">🎉&nbsp;Ganador&nbsp;🎉</span>
+						</li>
+					</ul>
+				</div>
+            </div>
+        </div>
+        <div class="modal" tabindex="-1" id="modal-player">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Jugadores</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="" id="form-user" method="POST">
+						<input v-model="playerForm.key" type="hidden" id="key" name="key" value="">
+						<div class="row">
+							<div class="form-group col-md-12">
+								<label for="name">Nombre:</label>
+								<input v-model.trim="playerForm.name" type="text" name="name" id="name" class="form-control">
+							</div>
+						</div>						
+						<div class="row" v-if="isEdit">
+							<div class="col-md-12 form-group">
+								<label for="cash">Dinero:</label>
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text">$</span>
+									</div>
+									<input v-model="playerForm.cash" v-bind:readonly="!isEdit" type="number" min="0" name="cash" id="cash" class="form-control">
+								</div>
+							</div>
+						</div>
+					</form>
+                </div>
+                <div class="modal-footer">
+                    <button v-on:click="handleCancel" type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button v-on:click="savePlayer" type="button" class="btn btn-success">Guardar cambios</button>
+                </div>
+                </div>
+            </div>
+        </div>
+	</div>
+	<!-- jQuery y Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>    
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>		
+	<!-- Vuejs -->
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+	<!-- Firebase database -->
+	<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
+	<!-- casino files -->
+	<script src="js/database.service.js"></script>
+	<script src="js/main.app.js"></script>
+</body>
+</html>
