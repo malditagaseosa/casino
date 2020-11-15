@@ -10,3 +10,6 @@ Es importante tener conexión a internet al momento de ejecutarlo.
 * jQuery y Bootstrap para animaciones, estilos y componentes visuales
 * Vuejs para interacciones y funcionalidades de la pagina
 * Open Iconic para iconos
+
+### Roadmap
+* Utilizar funcionalidades de tiempo real de firebase para mantener actualizado los usuarios entre diferentes clientes (concurrencia)
